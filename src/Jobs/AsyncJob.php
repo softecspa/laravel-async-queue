@@ -18,11 +18,13 @@ class AsyncJob extends SyncJob {
      *
      * @param  \Illuminate\Container\Container $container
      * @param \Barryvdh\Queue\Models\Job $job
+	 * @param  string  $queue
      */
-    public function __construct(Container $container, Job $job)
+    public function __construct(Container $container, Job $job, $queue)
     {
         $this->job = $job;
         $this->container = $container;
+		$this->queue = $queue;
     }
 
     /**

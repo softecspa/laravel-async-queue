@@ -4,8 +4,16 @@ use Illuminate\Queue\Queue;
 use Illuminate\Queue\QueueInterface;
 use Symfony\Component\Process\Process;
 use Barryvdh\Queue\Models\Job;
+use Barryvdh\Queue\Jobs\AsyncJob;
 
 class AsyncQueue extends Queue implements QueueInterface {
+
+	/**
+	 * The name of the default queue.
+	 *
+	 * @var string
+	 */
+	protected $default='default';
 
     /**
      * Push a new job onto the queue.
@@ -18,12 +26,13 @@ class AsyncQueue extends Queue implements QueueInterface {
     public function push($job, $data = '', $queue = null)
     {
         $id = $this->storeJob($job, $data, $queue);
+
         return 0;
     }
 
     /**
      * Store the job in the database
-     * 
+     *
      * @param  string  $job
      * @param  mixed   $data
      * @param  string  $queue
@@ -37,7 +46,7 @@ class AsyncQueue extends Queue implements QueueInterface {
         $job = new Job;
         $job->queue = ($queue ? $queue : $this->default);
         $job->status = Job::STATUS_OPEN;
-        $job->timestamp = ($timestamp!=0?$timestamp:time());
+        $job->timestamp = ($timestamp!=0?$timestamp:$job->freshTimestamp());
         $job->payload = $payload;
         $job->save();
 
@@ -66,7 +75,7 @@ class AsyncQueue extends Queue implements QueueInterface {
      * @param  string  $queue
      * @return \Illuminate\Queue\Jobs\Job|null
      */
-	public function pop($queue = null) 
+	public function pop($queue = null)
 	{
 		// TODO: prevedere la gestione di più code
 		$queue = $queue ? $queue : $this->default;
@@ -76,11 +85,12 @@ class AsyncQueue extends Queue implements QueueInterface {
 			->where('status', '=', Job::STATUS_OPEN)
 			->orWhere('status', '=', Job::STATUS_WAITING)
 			->take(1)
-			->get();
+			->first();
 
 		if ( ! is_null($job))
 		{
-			return $job;
+			//return $job;
+			return new AsyncJob($this->container, $job, $queue);
 		}
 	}
 
