@@ -17,8 +17,7 @@ class AsyncQueue extends Queue implements QueueInterface {
      */
     public function push($job, $data = '', $queue = null)
     {
-        $id = $this->storeJob($job, $data);
-        $this->startProcess($id, 0);
+        $id = $this->storeJob($job, $data, $queue);
         return 0;
     }
 
@@ -27,41 +26,22 @@ class AsyncQueue extends Queue implements QueueInterface {
      * 
      * @param  string  $job
      * @param  mixed   $data
-     * @param  integer $delay
+     * @param  string  $queue
+     * @param  integer $timestamp
      * @return integer The id of the job
      */
-    public function storeJob($job, $data, $delay = 0){
+    public function storeJob($job, $data, $queue, $timestamp = 0){
 
         $payload = $this->createPayload($job, $data);
 
         $job = new Job;
+        $job->queue = ($queue ? $queue : $this->default);
         $job->status = Job::STATUS_OPEN;
-        $job->delay = $delay;
+        $job->timestamp = ($timestamp!=0?$timestamp:time());
         $job->payload = $payload;
         $job->save();
 
         return $job->id;
-    }
-
-    /**
-     * Make a Process for the Artisan command for the job id
-     *
-     * @param  integer $jobId
-     */
-    public function startProcess($jobId)
-    {
-        $environment = $this->container->environment();
-        $cwd = $this->container['path.base'];
-        $string = 'php artisan queue:async %d --env=%s ';
-        if (defined('PHP_WINDOWS_VERSION_BUILD')){
-            $string = 'start /B ' . $string . ' > NUL';
-        } else {
-            $string = 'nohup ' . $string . ' > /dev/null 2>&1 &';
-        }
-
-        $command = sprintf($string, $jobId, $environment);
-        $process = new Process($command, $cwd);
-        $process->run();
     }
 
     /**
@@ -75,9 +55,8 @@ class AsyncQueue extends Queue implements QueueInterface {
      */
     public function later($delay, $job, $data = '', $queue = null)
     {
-        $delay = $this->getSeconds($delay);
-        $id = $this->storeJob($job, $data, $delay);
-        $this->startProcess($id);
+        $timestamp = time() + $this->getSeconds($delay);
+        $id = $this->storeJob($job, $data, $queue, $timestamp);
         return 0;
     }
 
@@ -87,7 +66,23 @@ class AsyncQueue extends Queue implements QueueInterface {
      * @param  string  $queue
      * @return \Illuminate\Queue\Jobs\Job|null
      */
-    public function pop($queue = null) {}
+	public function pop($queue = null) 
+	{
+		// TODO: prevedere la gestione di più code
+		$queue = $queue ? $queue : $this->default;
+
+		$job = Job::where('timestamp', '>', time())
+			->where('queue', '=', $queue)
+			->where('status', '=', Job::STATUS_OPEN)
+			->orWhere('status', '=', Job::STATUS_WAITING)
+			->take(1)
+			->get();
+
+		if ( ! is_null($job))
+		{
+			return $job;
+		}
+	}
 
 
     /**
@@ -100,6 +95,6 @@ class AsyncQueue extends Queue implements QueueInterface {
      */
     public function pushRaw($payload, $queue = null, array $options = array())
     {
-        //
+        // TODO?
     }
 }

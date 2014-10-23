@@ -15,9 +15,10 @@ class CreateQueueTable extends Migration {
         Schema::create('laq_async_queue', function(Blueprint $table)
         {
             $table->increments('id');
+            $table->string('queue', 255)->nullable()->default(null);
             $table->integer('status')->default(0);
             $table->integer('retries')->default(0);
-            $table->integer('delay')->default(0);
+            $table->timestamp('timestamp')->default(0);
             $table->longText('payload')->nullable();
             $table->timestamps();
         });

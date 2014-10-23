@@ -36,11 +36,14 @@ class AsyncJob extends SyncJob {
         $payload = $this->parsePayload($this->job->payload);
 
         // If we have to wait, sleep until our time has come
+		// TODO, secondo me va lasciato nel db fino al tempo giusto...
+		/*
         if($this->job->delay){
             $this->job->status = Job::STATUS_WAITING;
             $this->job->save();
             sleep($this->job->delay);
         }
+		*/
 
         // Mark job as started
         $this->job->status = Job::STATUS_STARTED;
@@ -68,6 +71,19 @@ class AsyncJob extends SyncJob {
         $this->job->delete();
     }
 
+	/*
+	 * Release the job back into the queue.
+	 *
+	 * @param  int   $delay
+	 * @return void
+	 */
+	public function release($delay = 0)
+	{
+        $this->job->status = Job::STATUS_WAITING;
+        $this->job->save();
+
+		$this->delete();
+	}
 
     /**
      * Parse the payload to an array.

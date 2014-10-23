@@ -6,9 +6,10 @@ use Illuminate\Database\Eloquent\Model;
  * Queue jobs
  *
  * @property integer $id
+ * @property string  $queue
  * @property integer $status
  * @property integer $retries
- * @property integer $delay
+ * @property integer $timestamp
  * @property string  $payload
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
