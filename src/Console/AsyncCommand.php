@@ -39,7 +39,7 @@ class AsyncCommand extends Command {
 	{
         $item = Job::findOrFail($this->argument('job_id'));
 
-        $job = new AsyncJob($this->laravel, $item);
+        $job = new AsyncJob($this->laravel, $item, $item->queue);
 
         $job->fire();
 

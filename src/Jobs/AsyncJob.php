@@ -14,6 +14,13 @@ class AsyncJob extends SyncJob {
     protected $job;
 
     /**
+     * The job queue
+     *
+     * @var Queue
+     */
+    protected $queue;
+
+    /**
      * Create a new job instance.
      *
      * @param  \Illuminate\Container\Container $container

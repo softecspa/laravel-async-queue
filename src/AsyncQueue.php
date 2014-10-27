@@ -39,7 +39,7 @@ class AsyncQueue extends Queue implements QueueInterface {
      * @param  integer $timestamp
      * @return integer The id of the job
      */
-    public function storeJob($job, $data, $queue, $timestamp = 0){
+    public function storeJob($job, $data, $queue=null, $timestamp = 0){
 
         $payload = $this->createPayload($job, $data);
 
